@@ -2,6 +2,7 @@ package git
 
 import (
 	"os"
+	"path/filepath"
 	"vcs/pkg"
 )
 
@@ -23,7 +24,7 @@ func createInfoDir() {
 	a := []byte("")
 	err = os.WriteFile("exclude.txt", a, 0777)
 	pkg.Check(err)
-	err = os.Chdir("..")
+	err = os.Chdir(pkg.VCSDirPath)
 	pkg.Check(err)
 }
 
@@ -36,21 +37,19 @@ func createObjectsDir() {
 	pkg.Check(err)
 	err = os.MkdirAll("pack", 0777)
 	pkg.Check(err)
-	err = os.Chdir("..")
+	err = os.Chdir(pkg.VCSDirPath)
 	pkg.Check(err)
 }
 
 func createRefsDir() {
 	err := os.MkdirAll("refs", 0777)
 	pkg.Check(err)
-	err = os.Chdir("refs")
-	pkg.Check(err)
+	os.Chdir("refs")
 	err = os.MkdirAll("heads", 0777)
 	pkg.Check(err)
 	err = os.MkdirAll("tags", 0777)
 	pkg.Check(err)
-	err = os.Chdir("..")
-	pkg.Check(err)
+	os.Chdir(pkg.VCSDirPath)
 }
 
 func createConfig() {
@@ -72,10 +71,13 @@ func createHEAD() {
 }
 
 func Init() {
+	wd, _ := os.Getwd()
+	pkg.SetWorkingDirPath(wd)
 	err := os.MkdirAll(".vcs", 0777)
 	pkg.Check(err)
 
-	err = os.Chdir(".vcs")
+	pkg.SetVCSDirPath(filepath.Join(wd, ".vcs"))
+	err = os.Chdir(pkg.VCSDirPath)
 	pkg.Check(err)
 
 	createConfig()

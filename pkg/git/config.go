@@ -14,6 +14,7 @@ import (
 
 func Config(s []string) {
 	// place other flags here
+	os.Chdir(pkg.VCSDirPath)
 
 	scopePtr := flag.String("scope", "local", "used to define the scope of config file on which operation is to be performed")
 	flag.Parse()
@@ -122,6 +123,8 @@ func peekConfig(section string, field string, file *os.File) (bool, bool, string
 }
 
 func FindConfigData(section string, field string) (*string, error) {
+	os.Chdir(pkg.VCSDirPath)
+
 	file, err := os.OpenFile("config.txt", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
 	pkg.Check(err)
 	var found bool
