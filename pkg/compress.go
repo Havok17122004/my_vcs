@@ -16,12 +16,12 @@ func CompressFileStoreInObjects(fp string) string {
 	s := GetSHAofFile(f)
 	stringSHA := fmt.Sprintf("%x", s)
 
-	os.Chdir(VCSDirPath)
+	err = os.Chdir(VCSDirPath)
+	Check(err)
 	err = os.Chdir("objects")
 	Check(err)
 
 	dir_name := stringSHA[:2]
-	// fmt.Println(stringSHA)
 	err = os.MkdirAll(dir_name, 0777)
 	Check(err)
 
@@ -34,7 +34,7 @@ func CompressFileStoreInObjects(fp string) string {
 		return stringSHA
 	}
 
-	outputFile, err := os.OpenFile(file_name, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0777)
+	outputFile, err := os.Create(file_name)
 	Check(err)
 	defer outputFile.Close()
 
@@ -43,21 +43,23 @@ func CompressFileStoreInObjects(fp string) string {
 	zlibWriter := zlib.NewWriter(outputFile)
 	_, err = io.Copy(zlibWriter, f)
 	Check(err)
-	// zlibWriter.Close()
+	err = zlibWriter.Close() // Ensure data is flushed and writer is properly closed
+	Check(err)
+	fmt.Printf("Created blob %s for %s\n", stringSHA, fp)
 	return stringSHA
 }
-
 func CompressStringStoreInObjects(s string) string {
 	var buffer bytes.Buffer
 
 	w := zlib.NewWriter(&buffer)
+	_, err := w.Write([]byte(s))
+	Check(err)
+	err = w.Close() // Ensure data is flushed and writer is properly closed
+	Check(err)
 
-	w.Write([]byte(s))
-
-	defer w.Close()
-
-	os.Chdir(VCSDirPath)
-	err := os.Chdir("objects")
+	err = os.Chdir(VCSDirPath)
+	Check(err)
+	err = os.Chdir("objects")
 	Check(err)
 
 	sha := GetSHAofText(s)
@@ -75,8 +77,9 @@ func CompressStringStoreInObjects(s string) string {
 		return stringsha
 	}
 
-	outputFile, err := os.Create(stringsha[2:])
+	outputFile, err := os.Create(file_name)
 	Check(err)
+	defer outputFile.Close()
 
 	_, err = io.Copy(outputFile, &buffer)
 	Check(err)

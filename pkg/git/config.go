@@ -12,10 +12,10 @@ import (
 	"vcs/pkg"
 )
 
+// TODO: Refactor code by adding structs that can efficiently manage the peekConfig and other functions.
+
 func Config(s []string) {
 	// place other flags here
-	os.Chdir(pkg.VCSDirPath)
-
 	scopePtr := flag.String("scope", "local", "used to define the scope of config file on which operation is to be performed")
 	flag.Parse()
 
@@ -23,27 +23,29 @@ func Config(s []string) {
 	var file *os.File
 
 	switch *scopePtr {
-	case "global": // how to find the path of the directory??????????????????????????????????????????????????????????????????????????????????????
-		userDirPath, e := os.UserConfigDir()
-		pkg.Check(e)
-		file, err = os.OpenFile(filepath.Join(userDirPath, "config.txt"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
+	// case "global": // how to find the path of the directory??????????????????????????????????????????????????????????????????????????????????????
+	// userDirPath, e := os.UserConfigDir()
+	// pkg.Check(e)
+	// file, err = os.OpenFile(filepath.Join(userDirPath, "config.txt"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
 	case "local":
-		file, err = os.OpenFile("config.txt", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
+		file, err = os.OpenFile(filepath.Join(pkg.VCSDirPath, "config.txt"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
 	default:
-		err = errors.New("not a valid scope")
+		fmt.Println("not a valid scope")
+		return
 	}
 	pkg.Check(err)
 	defer file.Close()
 	len := len(s)
-	set(strings.Split(s[len-2], "."), s[len-1], file)
+
+	setCommitValues(strings.Split(s[len-2], "."), s[len-1], file) // TODO: Improve the flag parsing code.
 }
 
-func set(s []string, val string, file *os.File) {
+func setCommitValues(s []string, val string, file *os.File) {
 
 	sectionFound, _, _, lineNum, err := peekConfig(s[0], s[1], file) // sectionFound, fieldFound, value, lineNum, err
 	file.Seek(0, io.SeekStart)
 	if lineNum != -1 {
-		fmt.Println("updating...")
+		fmt.Printf("updating %s field of %s section\n", s[1], s[0])
 		content, err := io.ReadAll(file)
 		pkg.Check(err)
 		lines := strings.Split(string(content), "\n")
@@ -60,10 +62,11 @@ func set(s []string, val string, file *os.File) {
 
 	var str string
 	if !sectionFound {
-		fmt.Println("adding section...")
+		fmt.Printf("adding section %s\n", s[0])
+		fmt.Printf("appending field %s\n", s[1])
 		str = fmt.Sprintf("[%s]\n\t%s = %s\n", s[0], s[1], val)
 	} else if err == io.EOF {
-		fmt.Println("appending...")
+		fmt.Printf("appending field %s\n", s[1])
 		str = fmt.Sprintf("\t%s = %s\n", s[1], val)
 	}
 	_, err = file.WriteString(str)
@@ -85,17 +88,20 @@ func peekConfig(section string, field string, file *os.File) (bool, bool, string
 	sectionWithBrackets := fmt.Sprintf("[%s]", section)
 	for {
 		line, _, err = reader.ReadLine()
+		// fmt.Println(string(line))
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			pkg.Check(err)
 		}
 		j++
+		// fmt.Println(strings.TrimSpace(string(line)), sectionWithBrackets)
 		if strings.TrimSpace(string(line)) == sectionWithBrackets {
+			// fmt.Print("dvsd")
 			sectionFound = true
 			for {
 				lineInSection, _, err = reader.ReadLine()
-
+				// fmt.Println(strings.TrimSpace(string(lineInSection)), field+" = ")
 				if err == io.EOF {
 					break
 				} else if err != nil {
@@ -113,6 +119,7 @@ func peekConfig(section string, field string, file *os.File) (bool, bool, string
 					valInd := 4 + len(field)
 					value = string(lineInSection[valInd:])
 					lineNum = j
+					// fmt.Println("eg")
 				}
 			}
 			break
