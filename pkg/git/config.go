@@ -129,7 +129,7 @@ func peekConfig(section string, field string, file *os.File) (bool, bool, string
 	return sectionFound, fieldFound, value, lineNum, err
 }
 
-func FindConfigData(section string, field string) (*string, error) {
+func FindConfigData(section string, field string) (string, error) {
 	os.Chdir(pkg.VCSDirPath)
 
 	file, err := os.OpenFile("config.txt", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
@@ -138,7 +138,7 @@ func FindConfigData(section string, field string) (*string, error) {
 	var val string
 
 	if _, found, val, _, _ = peekConfig(section, field, file); found {
-		return &val, nil
+		return val, nil
 	}
 
 	userDirPath, e := os.UserConfigDir()
@@ -146,12 +146,12 @@ func FindConfigData(section string, field string) (*string, error) {
 	file, err = os.OpenFile(filepath.Join(userDirPath, "config.txt"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
 	pkg.Check(err)
 	if _, found, val, _, _ := peekConfig(section, field, file); found {
-		return &val, nil
+		return val, nil
 	}
 	if val, found = os.LookupEnv("AUTHOR_NAME"); !found {
 		fmt.Printf("%s field not updated.\n", field)
 		err = errors.New("field not found")
-		return &val, err
+		return val, err
 	}
-	return &val, nil
+	return val, nil
 }

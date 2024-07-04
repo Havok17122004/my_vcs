@@ -22,6 +22,6 @@ func CreateBranch(branchname string) {
 	}
 	fmt.Println("Created branch ", branchname)
 	var logmessage string
-	pkg.UpdateBranchLog(branchname, s, s, *username, *useremail, time.Now().Unix(), strings.Split(time.Now().String(), " ")[2], logmessage)
+	pkg.UpdateBranchLog(branchname, s, s, username, useremail, time.Now().Unix(), strings.Split(time.Now().String(), " ")[2], logmessage)
 	defer file.Close()
 }

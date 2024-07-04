@@ -62,7 +62,7 @@ func ParseLog(logpath string) *[]logContents {
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		contents := strings.Split(line, " ")
+		contents := strings.SplitN(line, " ", 7)
 		// if len(contents) < 7 {
 		// 	continue // Skip lines that do not have enough fields
 		// }

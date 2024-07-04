@@ -34,7 +34,7 @@ func main() {
 	case "config":
 		if len(args) == 2 {
 			val, _ := git.FindConfigData(strings.Split(args[1], ".")[0], strings.Split(args[1], ".")[1])
-			fmt.Println(*val)
+			fmt.Println(val)
 		} else {
 			git.Config(args)
 		}
@@ -62,5 +62,9 @@ func main() {
 		}
 	case "add":
 		git.Add(args[1:])
+	case "diff":
+		git.Diff(args[1:])
+	case "catfile":
+		git.Catfile(args[1])
 	}
 }

@@ -14,13 +14,13 @@ import (
 type Header struct {
 	// signature     [4]byte  needed??
 	// version       [4]byte  needed??
-	numberEntries uint32
+	NumberEntries uint32
 }
 
 type Entry struct {
 	Metadata Metadata
-	id       string
-	pathsize uint16
+	Id       string
+	Pathsize uint16
 }
 
 type Index struct {
@@ -37,7 +37,7 @@ func ParseIndex() *Index {
 	fileSize := fileInfo.Size()
 	if fileSize == 0 {
 		return &Index{
-			Header:  Header{numberEntries: 0},
+			Header:  Header{NumberEntries: 0},
 			Entries: make(map[string]Entry),
 		}
 	}
@@ -77,13 +77,13 @@ func ParseIndex() *Index {
 	Check(err)
 
 	hBuf := bytes.NewBuffer(hSlice[:])
-	err = binary.Read(hBuf, binary.BigEndian, &h.numberEntries)
+	err = binary.Read(hBuf, binary.BigEndian, &h.NumberEntries)
 	// fmt.Println(h.numberEntries)
 	Check(err)
 
 	idx.Header = h
 	idx.Entries = make(map[string]Entry)
-	for i := uint32(0); i < h.numberEntries; i++ {
+	for i := uint32(0); i < h.NumberEntries; i++ {
 		var e Entry
 		metadataSlice := make([]byte, 28)
 		entryIdSlice := make([]byte, 40)
@@ -103,14 +103,14 @@ func ParseIndex() *Index {
 		meta := BytesToMetadata(metadataSlice)
 		// fmt.Println(meta)
 		e.Metadata = meta
-		e.id = string(entryIdSlice)
+		e.Id = string(entryIdSlice)
 
 		sizeBuf := bytes.NewBuffer(sizeSlice)
-		err = binary.Read(sizeBuf, binary.BigEndian, &e.pathsize)
+		err = binary.Read(sizeBuf, binary.BigEndian, &e.Pathsize)
 		// fmt.Println(e.pathsize)
 		Check(err)
 
-		nameSlice := make([]byte, e.pathsize)
+		nameSlice := make([]byte, e.Pathsize)
 		_, err = file.Read(nameSlice)
 		Check(err)
 		Name := string(nameSlice)
@@ -118,7 +118,7 @@ func ParseIndex() *Index {
 	}
 	// fmt.Println(idx.Header)
 	// fmt.Println(idx.Entries)
-	fmt.Println("Parsed index file as ", idx)
+	// fmt.Println("Parsed index file as ", idx)
 	return &idx
 
 }
@@ -134,9 +134,9 @@ func (index *Index) ModifyIndex(path string, info fs.FileInfo, Oid string) {
 	// fmt.Println(Oid)
 	Check(err)
 	// fmt.Println(len(path))
-	index.Entries[path] = Entry{Metadata: meta, id: Oid, pathsize: uint16(len(path))}
+	index.Entries[path] = Entry{Metadata: meta, Id: Oid, Pathsize: uint16(len(path))}
 	// fmt.Printf("%s\n\n", path)
-	index.Header.numberEntries = uint32(len(index.Entries))
+	index.Header.NumberEntries = uint32(len(index.Entries))
 	// fmt.Println(index)
 	fmt.Println("Modified index and added ", index.Entries[path], " for the path ", path)
 }
@@ -150,7 +150,7 @@ func (index *Index) SaveIndex() {
 
 	var h Header
 	headerBytes := make([]byte, unsafe.Sizeof(h))
-	binary.BigEndian.PutUint32(headerBytes, index.Header.numberEntries) //--------------------------------------------------------------------------------
+	binary.BigEndian.PutUint32(headerBytes, index.Header.NumberEntries) //--------------------------------------------------------------------------------
 	// fmt.Println(headerBytes)
 	_, err = buffer.Write(headerBytes)
 	Check(err)
@@ -173,13 +173,13 @@ func (index *Index) SaveIndex() {
 		_, err = file.Write(metadataBytes)
 		Check(err)
 
-		_, err = buffer.Write([]byte(entry.id))
+		_, err = buffer.Write([]byte(entry.Id))
 		Check(err)
-		_, err = file.Write([]byte(entry.id))
+		_, err = file.Write([]byte(entry.Id))
 		Check(err)
 
 		sizeBytes := make([]byte, 2)
-		binary.BigEndian.PutUint16(sizeBytes, uint16(entry.pathsize))
+		binary.BigEndian.PutUint16(sizeBytes, uint16(entry.Pathsize))
 		// fmt.Println(sizeBytes)
 		_, err = buffer.Write(sizeBytes)
 		Check(err)
