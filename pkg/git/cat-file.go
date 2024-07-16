@@ -8,8 +8,8 @@ import (
 	"vcs/pkg"
 )
 
-func Catfile(incompletehash string) {
-	if len(incompletehash) < 5 {
+func Catfile(flag string, incompletehash string) {
+	if len(incompletehash) < 3 {
 		fmt.Println("please enter a valid hash")
 		return
 	}
@@ -31,6 +31,12 @@ func Catfile(incompletehash string) {
 		return
 	}
 
-	str := pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", hash[:2], hash[2:]))
-	fmt.Println(str)
+	str, size, header := pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", hash[:2], hash[2:]))
+	if flag == "-p" {
+		fmt.Println(str)
+	} else if flag == "-t" {
+		fmt.Println(header)
+	} else if flag == "-s" {
+		fmt.Println(size)
+	}
 }

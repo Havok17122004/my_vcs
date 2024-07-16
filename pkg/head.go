@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func FetchHeadsSHA(relativebranchfilepath string) (string, error) {
+func FetchHeadsSHAfromPath(relativebranchfilepath string) (string, error) {
 	totalfilepath := relativebranchfilepath + ".txt"
 	file, err := os.Open(filepath.Join(VCSDirPath, totalfilepath))
 	if err != nil {
@@ -24,6 +24,7 @@ func FetchHeadsSHA(relativebranchfilepath string) (string, error) {
 	s, err := io.ReadAll(file)
 	Check(err)
 	defer file.Close()
+	fmt.Println(string(s))
 	return string(s), err
 }
 
@@ -37,24 +38,6 @@ func UpdateHeads(s string, relativebranchfilepath string) {
 		Check(err)
 		file.WriteString(s)
 		defer file.Close()
-	}
-}
-
-func ParseHEAD() string {
-	file, err := os.OpenFile(filepath.Join(VCSDirPath, "HEAD.txt"), os.O_CREATE|os.O_RDONLY, 0777)
-	Check(err)
-	defer file.Close()
-	fileScanner := bufio.NewScanner(file)
-	fileScanner.Scan() // Scan the file
-	line := fileScanner.Text()
-	if len(line) == 0 {
-		UpdateHEAD("refs: refs/heads/master")
-		return "refs/heads/master"
-	}
-	if strings.HasPrefix(line, "refs: ") {
-		return line[6:]
-	} else {
-		return line
 	}
 }
 

@@ -6,43 +6,26 @@ import (
 	"vcs/pkg"
 )
 
-func Checkout(text string) {
-	sha, branchexists, err := pkg.FindHash(text)
-	pkg.Check(err)
+func Checkout(args []string) {
+	sha, branchexists, _, err := pkg.FindHashofCommit(args[0])
+	if err != nil {
+		fmt.Println("no such commit exists as", args[0])
+		return
+	}
 	if branchexists {
-		pkg.UpdateHEAD("refs: " + filepath.Join("/refs/heads", text))
-		fmt.Println("On branch ", text)
+		pkg.UpdateHEAD("refs: " + filepath.Join("/refs/heads", args[0]))
+		fmt.Println("On branch ", args[0])
 	} else {
 		pkg.UpdateHEAD(sha)
 		fmt.Println("On commit ", sha, ". Entering detached HEAD state.")
 	}
-	// _, err := os.Open(filepath.Join(pkg.VCSDirPath, "/refs/heads/", branch+".txt"))
-	// var sha string
-	// if err == nil {
-	// 	pkg.UpdateHEAD("refs: " + filepath.Join("/refs/heads", branch))
-	// 	fmt.Println("On branch ", branch)
-	// } else {
-	// 	logcontents := pkg.ParseLog(filepath.Join(pkg.VCSDirPath, "/logs/HEAD.txt"))
-	// 	if logcontents == nil {
-	// 		fmt.Printf("%s does not match any branchname or commit hash\n", branch)
-	// 		return
-	// 	}
-	// 	cnt := 0
-	// 	// fmt.Print(logcontents)
-	// 	for _, logline := range *logcontents {
-	// 		// fmt.Println(logline.Currentsha, branch)
-	// 		if strings.HasPrefix(logline.Currentsha, branch) {
-	// 			cnt++
-	// 			sha = logline.Currentsha
-	// 		}
-	// 	}
-	// 	if cnt != 1 {
-	// 		// fmt.Print(cnt)
-	// 		fmt.Printf("%s does not match any branchname or commit hash\n", branch)
-	// 	} else {
-	// 		pkg.UpdateHEAD(sha)
-	// 		fmt.Println("On commit ", sha, ". Entering detached HEAD state.")
-	// 	}
-
-	// }
+	if len(args) == 1 {
+		pkg.RecoverWorkingDirToCommitWithDeletions(pkg.WorkingDirPath, sha)
+		pkg.RecoverIndexToCommit(pkg.WorkingDirPath, sha)
+	}
+	for _, path := range args[1:] {
+		path = filepath.Join(pkg.WorkingDirPath, path)
+		pkg.RecoverWorkingDirToCommitWithDeletions(path, sha)
+		pkg.RecoverIndexToCommit(path, sha)
+	}
 }

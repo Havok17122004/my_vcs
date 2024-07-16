@@ -8,13 +8,12 @@ import (
 	"os"
 )
 
-func CompressFileStoreInObjects(fp string) string {
+func CompressFileStoreInObjects(fp string, objectType string) string {
 	f, err := os.Open(fp)
 	Check(err)
 	defer f.Close()
 
-	s := GetSHAofFile(f)
-	stringSHA := fmt.Sprintf("%x", s)
+	stringSHA := GetSHAofFile(f)
 
 	err = os.Chdir(VCSDirPath)
 	Check(err)
@@ -39,22 +38,25 @@ func CompressFileStoreInObjects(fp string) string {
 	defer outputFile.Close()
 
 	f.Seek(0, 0)
-
+	info, _ := f.Stat()
 	zlibWriter := zlib.NewWriter(outputFile)
+	zlibWriter.Write([]byte(fmt.Sprintf("%s %d\x00", objectType, info.Size())))
 	_, err = io.Copy(zlibWriter, f)
 	Check(err)
-	err = zlibWriter.Close() // Ensure data is flushed and writer is properly closed
+	err = zlibWriter.Close()
 	Check(err)
 	fmt.Printf("Created blob %s for %s\n", stringSHA, fp)
 	return stringSHA
 }
-func CompressStringStoreInObjects(s string) string {
+
+func CompressStringStoreInObjects(s string, objectType string) string {
 	var buffer bytes.Buffer
 
 	w := zlib.NewWriter(&buffer)
+	w.Write(([]byte(fmt.Sprintf("%s %d\x00", objectType, len(s))))) //len(s) is taken as size, because each char occupies 1 byte
 	_, err := w.Write([]byte(s))
 	Check(err)
-	err = w.Close() // Ensure data is flushed and writer is properly closed
+	err = w.Close()
 	Check(err)
 
 	err = os.Chdir(VCSDirPath)

@@ -6,87 +6,54 @@ import (
 	"vcs/pkg"
 )
 
-func createBranchesDir() {
-	err := os.MkdirAll("branches", 0777)
-	pkg.Check(err)
-}
-
-func createHooksDir() {
-	err := os.MkdirAll("hooks", 0777)
-	pkg.Check(err)
-}
-
 func createInfoDir() {
-	err := os.MkdirAll("info", 0777)
-	pkg.Check(err)
-	err = os.Chdir("info")
-	pkg.Check(err)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "info"), 0777)
 	a := []byte("")
-	err = os.WriteFile("exclude.txt", a, 0777)
+	err := os.WriteFile(filepath.Join(pkg.VCSDirPath, "info/exclude.txt"), a, 0777)
 	pkg.Check(err)
-	err = os.Chdir(pkg.VCSDirPath)
-	pkg.Check(err)
-}
-
-func createObjectsDir() {
-	err := os.MkdirAll("objects", 0777)
-	pkg.Check(err)
-	err = os.Chdir("objects")
-	pkg.Check(err)
-	err = os.MkdirAll("info", 0777)
-	pkg.Check(err)
-	err = os.MkdirAll("pack", 0777)
-	pkg.Check(err)
-	err = os.Chdir(pkg.VCSDirPath)
-	pkg.Check(err)
-}
-
-func createRefsDir() {
-	err := os.MkdirAll("refs", 0777)
-	pkg.Check(err)
-	os.Chdir("refs")
-	err = os.MkdirAll("heads", 0777)
-	pkg.Check(err)
-	err = os.MkdirAll("tags", 0777)
-	pkg.Check(err)
-	os.Chdir(pkg.VCSDirPath)
 }
 
 func createConfig() {
 	a := []byte("")
-	err := os.WriteFile("config.txt", a, 0777)
+	err := os.WriteFile(filepath.Join(pkg.VCSDirPath, "config.txt"), a, 0777)
 	pkg.Check(err)
 }
 
 func createDesc() {
 	a := []byte("")
-	err := os.WriteFile("description.txt", a, 0777)
+	err := os.WriteFile(filepath.Join(pkg.VCSDirPath, "description.txt"), a, 0777)
 	pkg.Check(err)
 }
 
 func createHEAD() {
 	a := []byte("")
-	err := os.WriteFile("HEAD.txt", a, 0777)
+	err := os.WriteFile(filepath.Join(pkg.VCSDirPath, "HEAD.txt"), a, 0777)
 	pkg.Check(err)
 }
 
-func Init() {
-	wd, _ := os.Getwd()
+func Init(args []string) {
+	var wd string
+	wd, _ = os.Getwd()
+	if len(args) != 1 {
+		wd = filepath.Join(wd, args[1])
+		os.MkdirAll(wd, 0777)
+	}
+
 	pkg.SetWorkingDirPath(wd)
-	err := os.MkdirAll(".vcs", 0777)
-	pkg.Check(err)
+	os.Chdir(wd)
+	os.MkdirAll(filepath.Join(pkg.WorkingDirPath, ".vcs"), 0777)
 
 	pkg.SetVCSDirPath(filepath.Join(wd, ".vcs"))
-	err = os.Chdir(pkg.VCSDirPath)
-	pkg.Check(err)
-
 	createConfig()
 	createDesc()
 	createHEAD()
-	createBranchesDir()
-	createHooksDir()
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "branches"), 0777)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "hooks"), 0777)
 	createInfoDir()
-	createObjectsDir()
-	createRefsDir()
-
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "objects"), 0777)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "objects/info"), 0777)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "objects/pack"), 0777)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "refs"), 0777)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "refs/heads"), 0777)
+	os.MkdirAll(filepath.Join(pkg.VCSDirPath, "refs/tags"), 0777)
 }

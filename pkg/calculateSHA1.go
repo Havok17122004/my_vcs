@@ -2,17 +2,18 @@ package pkg
 
 import (
 	"crypto/sha1"
+	"fmt"
 	"io"
 	"os"
 )
 
-func GetSHAofFile(f *os.File) []byte {
+func GetSHAofFile(f *os.File) string {
 	h := sha1.New()
 
 	_, err := io.Copy(h, f)
 	Check(err)
-
-	return h.Sum(nil)
+	s := fmt.Sprintf("%x", h.Sum(nil))
+	return s
 }
 
 func GetSHAofText(s string) [20]byte {

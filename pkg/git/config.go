@@ -129,7 +129,7 @@ func peekConfig(section string, field string, file *os.File) (bool, bool, string
 	return sectionFound, fieldFound, value, lineNum, err
 }
 
-func FindConfigData(section string, field string) (string, error) {
+func ParseConfigData(section string, field string) (string, error) {
 	os.Chdir(pkg.VCSDirPath)
 
 	file, err := os.OpenFile("config.txt", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)

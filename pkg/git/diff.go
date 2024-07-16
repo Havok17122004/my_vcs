@@ -3,7 +3,6 @@ package git
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,22 +12,12 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-type pair struct {
-	exists bool
-	sha    string
-}
-
-type pairofpairs struct {
-	p1 pair
-	p2 pair
-}
-
 type pairstrings struct {
 	name  string
 	isDir bool
 }
 
-func Diff(args []string) {
+func Diff(args []string) { // print output ko thik kaise karu
 
 	switch len(args) {
 	case 0: // compares working directory and staging area
@@ -47,21 +36,21 @@ func Diff(args []string) {
 			FindDiffFileStagingArea(path)
 		}
 	case 2:
-		hash1, _, err := pkg.FindHash(args[0])
+		hash1, _, _, err := pkg.FindHashofCommit(args[0])
 		pkg.Check(err)
-		hash2, _, err := pkg.FindHash(args[1])
+		hash2, _, _, err := pkg.FindHashofCommit(args[1])
 		pkg.Check(err)
 		// fmt.Println(hash1, hash2)
-		commit1 := ParseCommit(hash1)
-		commit2 := ParseCommit(hash2)
+		commit1 := pkg.ParseCommit(hash1)
+		commit2 := pkg.ParseCommit(hash2)
 		// fmt.Println(commit1.Treesha)
 		// fmt.Println(commit2.Treesha)
 
 		FindDiffTrees(commit1.Treesha, commit2.Treesha)
 	case 3:
-		hash1, _, err := pkg.FindHash(args[0])
+		hash1, _, _, err := pkg.FindHashofCommit(args[0])
 		pkg.Check(err)
-		hash2, _, err := pkg.FindHash(args[1])
+		hash2, _, _, err := pkg.FindHashofCommit(args[1])
 		pkg.Check(err)
 		FindDiffCommittedFile(args[2], hash1, hash2)
 	}
@@ -152,22 +141,30 @@ func cleanPatchText(patchText string) string {
 	return buff.String()
 }
 
-func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) {
-	treeentry1 := GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash1)
-	treeentry2 := GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash2)
+func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) { // not used traverse tree here bcoz getCommittedEntry seems faster.
+	treeentry1 := pkg.GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash1)
+	treeentry2 := pkg.GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash2)
+	if treeentry1.FileType == "tree" && treeentry2.FileType == "tree" {
+		FindDiffTrees(treeentry1.Sha, treeentry2.Sha)
+		return
+	}
+	if treeentry1.FileType != treeentry2.FileType {
+		fmt.Println(path, "is of different filetypes in both commit hashes")
+		return
+	}
 	var s1, s2 string
 	if treeentry1.Sha == "" {
 		s1 = ""
 		// fmt.Println("gere")
 	} else {
-		s1 = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", treeentry1.Sha[:2], treeentry1.Sha[2:]))
+		s1, _, _ = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", treeentry1.Sha[:2], treeentry1.Sha[2:]))
 	}
 
 	if treeentry2.Sha == "" {
 		s2 = ""
 		// fmt.Println("here")
 	} else {
-		s2 = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", treeentry2.Sha[:2], treeentry2.Sha[2:]))
+		s2, _, _ = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", treeentry2.Sha[:2], treeentry2.Sha[2:]))
 	}
 	// fmt.Println(s1)
 	// fmt.Println(s2)
@@ -175,44 +172,37 @@ func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) 
 }
 
 func FindDiffTrees(treesha1 string, treesha2 string) {
-	tree1 := ParseTree(treesha1)
-	tree2 := ParseTree(treesha2)
-	// var mp map [string] pairofpairs does not initialise
-	// fmt.Println(tree1)
-	// fmt.Println(tree2)
-	mp := make(map[pairstrings]pairofpairs)
-	for _, entry := range *tree1 {
-
-		mp[pairstrings{entry.Name, entry.FileType == "tree"}] = pairofpairs{p1: pair{true, entry.Sha}}
+	tree1 := pkg.TraverseTree(treesha1)
+	tree2 := pkg.TraverseTree(treesha2)
+	mp := make(map[pairstrings]pkg.PairOfSHA)
+	for _, entry := range tree1 {
+		mp[pairstrings{entry.Path, entry.FileType == "tree"}] = pkg.PairOfSHA{P1: pkg.Pair{Exists: true, Sha: entry.Sha}}
 	}
 	// fmt.Println(mp)
-	for _, entry := range *tree2 {
-		mp[pairstrings{entry.Name, entry.FileType == "tree"}] = pairofpairs{p1: mp[pairstrings{entry.Name, entry.FileType == "tree"}].p1, p2: pair{true, entry.Sha}}
+	for _, entry := range tree2 {
+		mp[pairstrings{entry.Path, entry.FileType == "tree"}] = pkg.PairOfSHA{P1: mp[pairstrings{entry.Path, entry.FileType == "tree"}].P1, P2: pkg.Pair{Exists: true, Sha: entry.Sha}}
 	}
-	// fmt.Println(mp)
 	for key, pop := range mp {
 		// fmt.Println(key)
 		var s1 string
 		var s2 string
-		if pop.p1.sha == pop.p2.sha {
+		if pop.P1.Sha == pop.P2.Sha {
 			continue
 		}
-		if !pop.p1.exists {
+		if !pop.P1.Exists {
 			// fmt.Println("s1 empty for ", key)
 			s1 = ""
 		}
-		if !pop.p2.exists {
+		if !pop.P2.Exists {
 			// fmt.Println("s2 empty for ", key)
 			s2 = ""
 		}
-		if key.isDir {
-			FindDiffTrees(pop.p1.sha, pop.p2.sha)
-		} else {
-			if pop.p1.exists {
-				s1 = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", pop.p1.sha[:2], pop.p1.sha[2:]))
+		if !key.isDir {
+			if pop.P1.Exists {
+				s1, _, _ = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", pop.P1.Sha[:2], pop.P1.Sha[2:]))
 			}
-			if pop.p2.exists {
-				s2 = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", pop.p2.sha[:2], pop.p2.sha[2:]))
+			if pop.P2.Exists {
+				s2, _, _ = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", pop.P2.Sha[:2], pop.P2.Sha[2:]))
 			}
 			FindDiffStrings(s1, s2)
 		}
@@ -221,23 +211,11 @@ func FindDiffTrees(treesha1 string, treesha2 string) {
 
 func FindDiffStagingArea(path string) {
 	index := pkg.ParseIndex()
-	for key, entry := range index.Entries {
-		if !strings.HasPrefix(key, path) {
+	for key := range index.Entries {
+		if !strings.HasPrefix(key, path) { // checked for folders
 			continue
 		}
-		file, err := os.Open(key)
-		var sha []byte
-		if err == nil {
-			sha = pkg.GetSHAofFile(file)
-		}
-		if string(sha) != entry.Id {
-			s1 := pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", entry.Id[:2], entry.Id[2:]))
-			data, err := os.ReadFile(key)
-			if err != nil && err != io.EOF {
-				pkg.Check(err)
-			}
-			FindDiffStrings(s1, string(data))
-		}
+		FindDiffFileStagingArea(key)
 	}
 }
 
@@ -248,10 +226,14 @@ func FindDiffFileStagingArea(path string) {
 		fmt.Println(path + " does not exist in staging area")
 		return
 	}
-	s1 := pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", value.Id[:2], value.Id[2:]))
-	data, err := os.ReadFile(path)
-	if err != nil && err != io.EOF {
-		pkg.Check(err)
+	file, err := os.Open(path)
+	var sha string
+	if err == nil {
+		sha = pkg.GetSHAofFile(file)
 	}
-	FindDiffStrings(s1, string(data))
+	if sha != value.Id {
+		s1, _, _ := pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", value.Id[:2], value.Id[2:]))
+		data, _ := os.ReadFile(path)
+		FindDiffStrings(s1, string(data))
+	}
 }

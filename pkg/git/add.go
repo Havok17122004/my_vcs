@@ -15,9 +15,13 @@ func makeBlobs(path string, index *pkg.Index) {
 	info, err := dir.Stat()
 	pkg.Check(err)
 	if !info.IsDir() {
-		s := pkg.CompressFileStoreInObjects(filepath.Join(pkg.WorkingDirPath, path))
+		s := pkg.CompressFileStoreInObjects(filepath.Join(pkg.WorkingDirPath, path), "blob")
 		pkg.Check(err)
-		index.ModifyIndex(filepath.Join(pkg.WorkingDirPath, path), info, s)
+		meta, err := pkg.GetFileMetadata(info)
+		// fmt.Println(meta)
+		pkg.Check(err)
+
+		index.ModifyIndex(filepath.Join(pkg.WorkingDirPath, path), meta, s)
 		// fmt.Print("modified?")
 		return
 	}
@@ -29,9 +33,12 @@ func makeBlobs(path string, index *pkg.Index) {
 		} else if file.IsDir() {
 			makeBlobs(file_path, index)
 		} else {
-			s := pkg.CompressFileStoreInObjects(filepath.Join(pkg.WorkingDirPath, file_path))
+			s := pkg.CompressFileStoreInObjects(filepath.Join(pkg.WorkingDirPath, file_path), "blob")
 			info, _ := file.Info()
-			index.ModifyIndex(filepath.Join(pkg.WorkingDirPath, file_path), info, s)
+			meta, err := pkg.GetFileMetadata(info)
+			// fmt.Println(meta)
+			pkg.Check(err)
+			index.ModifyIndex(filepath.Join(pkg.WorkingDirPath, file_path), meta, s)
 		}
 	}
 }

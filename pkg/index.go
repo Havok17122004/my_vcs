@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -59,12 +58,13 @@ func ParseIndex() *Index {
 	_, err = file.Read(buffer)
 	Check(err)
 
-	checksumStr := fmt.Sprintf("%x", checksum)
-	sha := fmt.Sprintf("%x", GetSHAofText(string(buffer)))
-	if checksumStr != sha {
-		fmt.Println("sha of indexfile not matching")
-		return &Index{}
-	}
+	// checksumStr := fmt.Sprintf("%x", checksum)
+	// sha := fmt.Sprintf("%x", GetSHAofText(string(buffer)))
+	// if checksumStr != sha {
+	// 	fmt.Println(checksumStr, sha)
+	// 	fmt.Println("sha of indexfile not matching")
+	// 	return &Index{}
+	// }
 
 	_, err = file.Seek(0, 0)
 	Check(err)
@@ -73,19 +73,19 @@ func ParseIndex() *Index {
 	// fmt.Println(unsafe.Sizeof(h))
 	hSlice := make([]byte, unsafe.Sizeof(h))
 	_, err = file.Read(hSlice)
-	// fmt.Println(hSlice)
+	fmt.Println(hSlice)
 	Check(err)
 
 	hBuf := bytes.NewBuffer(hSlice[:])
 	err = binary.Read(hBuf, binary.BigEndian, &h.NumberEntries)
-	// fmt.Println(h.numberEntries)
+	fmt.Println(h.NumberEntries)
 	Check(err)
 
 	idx.Header = h
 	idx.Entries = make(map[string]Entry)
 	for i := uint32(0); i < h.NumberEntries; i++ {
 		var e Entry
-		metadataSlice := make([]byte, 28)
+		metadataSlice := make([]byte, 12)
 		entryIdSlice := make([]byte, 40)
 		sizeSlice := make([]byte, 2)
 
@@ -123,16 +123,15 @@ func ParseIndex() *Index {
 
 }
 
-func (index *Index) ModifyIndex(path string, info fs.FileInfo, Oid string) {
+func (index *Index) ModifyIndex(path string, meta Metadata, Oid string) {
 	if index.Entries == nil {
 		index.Entries = make(map[string]Entry)
 	}
-	meta, err := GetFileMetadata(info)
-	// fmt.Println(meta)
-	Check(err)
+	// meta, err := GetFileMetadata(info)
+	// // fmt.Println(meta)
+	// Check(err)
 
 	// fmt.Println(Oid)
-	Check(err)
 	// fmt.Println(len(path))
 	index.Entries[path] = Entry{Metadata: meta, Id: Oid, Pathsize: uint16(len(path))}
 	// fmt.Printf("%s\n\n", path)

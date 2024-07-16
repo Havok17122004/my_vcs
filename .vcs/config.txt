@@ -1,3 +1,0 @@
-[user]
-	name = atharv
-	email = at@g.com
