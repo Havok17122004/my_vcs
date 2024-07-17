@@ -1,9 +1,7 @@
 package git
 
 import (
-	"bytes"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,113 +44,43 @@ func Diff(args []string) { // print output ko thik kaise karu
 		// fmt.Println(commit1.Treesha)
 		// fmt.Println(commit2.Treesha)
 
-		FindDiffTrees(commit1.Treesha, commit2.Treesha)
+		set1, set2 := FindDiffTrees(commit1.Treesha, commit2.Treesha)
+		for i, _ := range set1 {
+			diff := FindDiffStrings(set1[i], set2[i])
+			fmt.Println(diff)
+		}
 	case 3:
 		hash1, _, _, err := pkg.FindHashofCommit(args[0])
 		pkg.Check(err)
 		hash2, _, _, err := pkg.FindHashofCommit(args[1])
 		pkg.Check(err)
-		FindDiffCommittedFile(args[2], hash1, hash2)
+		s1, s2 := FindDiffCommittedFile(args[2], hash1, hash2)
+		diff := FindDiffStrings(s1, s2)
+		fmt.Println(diff)
 	}
 }
-
-// DiffPrettyText converts a []Diff into a colored text report.
-func DiffPrettyText(dmp *diffmatchpatch.DiffMatchPatch, diffs []diffmatchpatch.Diff) string {
-	var buff bytes.Buffer
-	for _, diff := range diffs {
-		var str string
-		// changed := false
-		text := diff.Text
-
-		switch diff.Type {
-		case diffmatchpatch.DiffInsert:
-			// Green background for insertions
-			// _, _ = buff.WriteString("\x1b[42m")
-			// _, _ = buff.WriteString(text)
-			// _, _ = buff.WriteString("\x1b[49m")
-			str = fmt.Sprintf("%s\x1b[42m%s\x1b[49m", str, text)
-			// changed = true
-		case diffmatchpatch.DiffDelete:
-			// Red background for deletions
-			// _, _ = buff.WriteString("\x1b[41m")
-			// _, _ = buff.WriteString(text)
-			// _, _ = buff.WriteString("\x1b[49m")
-			str = fmt.Sprintf("%s\x1b[41m%s\x1b[49m", str, text)
-			// changed = true
-		case diffmatchpatch.DiffEqual:
-			// Default background for equalities
-			// _, _ = buff.WriteString("\x1b[49m")
-			// _, _ = buff.WriteString(text)
-			// str = fmt.Sprintf("%s\x1b[49m%s", str, text)
-		}
-		// if changed {
-		buff.WriteString(str)
-		// }
-	}
-
-	return buff.String()
-}
-
-func FindDiffStrings(text1 string, text2 string) {
-	// fmt.Println(text1)
-	// fmt.Println(text2, "here")
-	// dmp := diffmatchpatch.New()
-
-	// diffs := dmp.DiffMain(text1, text2, false) // if bool is true, calculates diff line-by-line and if false it calculates diff by divide and conquer method.
-	// fmt.Println(diffs)
-	// fmt.Println(dmp.DiffPrettyText(diffs))
-
-	// dmp := diffmatchpatch.New()
-
-	// fileAdmp, fileBdmp, dmpStrings := dmp.DiffLinesToChars(text1, text2)
-	// diffs := dmp.DiffMain(fileAdmp, fileBdmp, false)
-	// diffs = dmp.DiffCharsToLines(diffs, dmpStrings)
-	// diffs = dmp.DiffCleanupSemantic(diffs)
-	// // s := dmp.DiffPrettyText(diffs)
-	// fmt.Println(DiffPrettyText(dmp, diffs))
-	// fmt.Print(s)
+func FindDiffStrings(a string, b string) string {
 	dmp := diffmatchpatch.New()
+	fileA, fileB, dmpStrings := dmp.DiffLinesToChars(a, b)
+	diffs := dmp.DiffMain(fileA, fileB, false)
+	diffs = dmp.DiffCharsToLines(diffs, dmpStrings)
+	diffs = dmp.DiffCleanupSemantic(diffs)
 
-	diffs := dmp.DiffMain(text1, text2, false)
-	patches := dmp.PatchMake(text1, diffs)
-	patchText := dmp.PatchToText(patches)
-	fmt.Println(cleanPatchText(patchText))
+	return dmp.DiffPrettyText(diffs)
 }
 
-func cleanPatchText(patchText string) string {
-	// Decode URL-encoded sequences
-	decodedText, err := url.QueryUnescape(patchText)
-	if err != nil {
-		fmt.Println("Error decoding patch text:", err)
-		return patchText
-	}
-
-	// Remove extraneous newlines
-	var buff bytes.Buffer
-	lines := bytes.Split([]byte(decodedText), []byte("\n"))
-	for _, line := range lines {
-		if len(line) > 0 {
-			buff.Write(line)
-			buff.WriteByte('\n')
-		}
-	}
-	// var buff bytes.Buffer
-	buff.Write([]byte(decodedText))
-	return buff.String()
-}
-
-func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) { // not used traverse tree here bcoz getCommittedEntry seems faster.
+func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) (string, string) { // not used traverse tree here bcoz getCommittedEntry seems faster.
 	treeentry1 := pkg.GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash1)
 	treeentry2 := pkg.GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash2)
+	var s1, s2 string
 	if treeentry1.FileType == "tree" && treeentry2.FileType == "tree" {
 		FindDiffTrees(treeentry1.Sha, treeentry2.Sha)
-		return
+		return s1, s2
 	}
 	if treeentry1.FileType != treeentry2.FileType {
 		fmt.Println(path, "is of different filetypes in both commit hashes")
-		return
+		return s1, s2
 	}
-	var s1, s2 string
 	if treeentry1.Sha == "" {
 		s1 = ""
 		// fmt.Println("gere")
@@ -168,10 +96,10 @@ func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) 
 	}
 	// fmt.Println(s1)
 	// fmt.Println(s2)
-	FindDiffStrings(s1, s2)
+	return s1, s2
 }
 
-func FindDiffTrees(treesha1 string, treesha2 string) {
+func FindDiffTrees(treesha1 string, treesha2 string) ([]string, []string) {
 	tree1 := pkg.TraverseTree(treesha1)
 	tree2 := pkg.TraverseTree(treesha2)
 	mp := make(map[pairstrings]pkg.PairOfSHA)
@@ -182,6 +110,7 @@ func FindDiffTrees(treesha1 string, treesha2 string) {
 	for _, entry := range tree2 {
 		mp[pairstrings{entry.Path, entry.FileType == "tree"}] = pkg.PairOfSHA{P1: mp[pairstrings{entry.Path, entry.FileType == "tree"}].P1, P2: pkg.Pair{Exists: true, Sha: entry.Sha}}
 	}
+	var set1, set2 []string
 	for key, pop := range mp {
 		// fmt.Println(key)
 		var s1 string
@@ -204,9 +133,11 @@ func FindDiffTrees(treesha1 string, treesha2 string) {
 			if pop.P2.Exists {
 				s2, _, _ = pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", pop.P2.Sha[:2], pop.P2.Sha[2:]))
 			}
-			FindDiffStrings(s1, s2)
+			set1 = append(set1, s1)
+			set2 = append(set2, s2)
 		}
 	}
+	return set1, set2
 }
 
 func FindDiffStagingArea(path string) {
@@ -234,6 +165,7 @@ func FindDiffFileStagingArea(path string) {
 	if sha != value.Id {
 		s1, _, _ := pkg.ReadCompressedFile(filepath.Join(pkg.VCSDirPath, "objects", value.Id[:2], value.Id[2:]))
 		data, _ := os.ReadFile(path)
-		FindDiffStrings(s1, string(data))
+		diff := FindDiffStrings(s1, string(data))
+		fmt.Println(diff)
 	}
 }
