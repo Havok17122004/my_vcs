@@ -49,5 +49,6 @@ type LogContents struct {
 	Authoremail string
 	Timestamp   int64
 	Gmt         string
+	Operation   string
 	Message     string
 }

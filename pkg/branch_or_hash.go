@@ -44,7 +44,7 @@ func FindHashofCommit(text string) (string, bool, LogContents, error) {
 	if err == nil {
 		b := make([]byte, 40)
 		file.Read(b)
-		return fmt.Sprintf("%x", b), true, LogContents{}, nil
+		return string(b), true, LogContents{}, nil
 	} else {
 		logcontents := ParseLog(filepath.Join(VCSDirPath, "/logs/HEAD.txt"))
 		if logcontents == nil {

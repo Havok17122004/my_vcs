@@ -15,11 +15,6 @@ func Log(args []string) {
 	if len(args) == 0 {
 		contents := pkg.ParseLog(filepath.Join(pkg.VCSDirPath, "logs/HEAD.txt"))
 		for _, content := range *contents {
-			if strings.HasPrefix(content.Message, "commit: ") {
-				content.Message, _ = strings.CutPrefix(content.Message, "commit: ")
-			} else {
-				continue
-			}
 			toBeDisplayed[content.Timestamp] = content
 		}
 	} else {
@@ -40,30 +35,15 @@ func Log(args []string) {
 				}
 				if excluded {
 					for _, content := range *contents {
-						if strings.HasPrefix(content.Message, "commit: ") {
-							content.Message, _ = strings.CutPrefix(content.Message, "commit: ")
-						} else {
-							continue
-						}
 						exclusions[content.Timestamp] = content
 					}
 				} else {
 					for _, content := range *contents {
-						if strings.HasPrefix(content.Message, "commit: ") {
-							content.Message, _ = strings.CutPrefix(content.Message, "commit: ")
-						} else {
-							continue
-						}
 						toBeDisplayed[content.Timestamp] = content
 					}
 				}
 
 			} else {
-				if strings.HasPrefix(logLine.Message, "commit: ") {
-					logLine.Message, _ = strings.CutPrefix(logLine.Message, "commit: ")
-				} else {
-					continue
-				}
 				if excluded {
 					exclusions[logLine.Timestamp] = logLine
 				} else {

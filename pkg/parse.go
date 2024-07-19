@@ -103,11 +103,12 @@ func ParseLog(logpath string) *[]LogContents {
 
 	var parsedContentsLog []LogContents
 	fileScanner := bufio.NewScanner(file)
-
+	// fmt.Print("baka")
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		contents := strings.SplitN(line, " ", 7)
-		if len(contents) < 7 {
+		// fmt.Println(line, "ppp")
+		contents := strings.SplitN(line, " ", 8)
+		if len(contents) < 8 {
 			continue // Skip lines that do not have enough fields
 		}
 		var log LogContents
@@ -118,7 +119,8 @@ func ParseLog(logpath string) *[]LogContents {
 		log.Timestamp, err = strconv.ParseInt(contents[4], 10, 64)
 		Check(err)
 		log.Gmt = contents[5]
-		log.Message = contents[6]
+		log.Operation = contents[6][:len(contents[6])-1]
+		log.Message = contents[7]
 		// log.branchname = filepath.Base(logpath) // Uncomment this if branch name is required
 
 		parsedContentsLog = append(parsedContentsLog, log)

@@ -101,6 +101,7 @@ func makeCommitObject(c *pkg.CommitObject) {
 	var err error
 	c.Parentsha, err = pkg.FetchHeadsSHAfromPath(pkg.ParseHEADgivePath())
 	s := fmt.Sprintf("tree %s\n", c.Treesha)
+	var operation string
 	if err == nil {
 		s = fmt.Sprintf("%sparent %s\n", s, c.Parentsha)
 		if c.Parentsha != "0000000000000000000000000000000000000000" {
@@ -110,6 +111,9 @@ func makeCommitObject(c *pkg.CommitObject) {
 				fmt.Printf("On branch %s\nnothing to commit, working tree clean\n", branchname)
 				return
 			}
+			operation = "commit"
+		} else {
+			operation = "commit(initial)"
 		}
 	}
 	c.Time = time.Now().Unix()
@@ -119,13 +123,13 @@ func makeCommitObject(c *pkg.CommitObject) {
 	fmt.Println("Created commit object ", sha)
 	pkg.UpdateHeads(sha, pkg.ParseHEADgivePath())
 	var logmessage string = c.Message // to be updated!
-	pkg.UpdateHEADlog(c.Parentsha, sha, c.Authorname, c.Authoremail, c.Time, c.Timezone, logmessage, "commit")
+	pkg.UpdateHEADlog(c.Parentsha, sha, c.Authorname, c.Authoremail, c.Time, c.Timezone, logmessage, operation)
 
 	relativebranchfilepath := pkg.ParseHEADgivePath()
 
 	_, err = os.Open(filepath.Join(pkg.VCSDirPath, relativebranchfilepath+".txt"))
 	if err == nil {
-		pkg.UpdateBranchLog(filepath.Base(relativebranchfilepath), c.Parentsha, sha, c.Authorname, c.Authoremail, c.Time, c.Timezone, logmessage, "commit")
+		pkg.UpdateBranchLog(filepath.Base(relativebranchfilepath), c.Parentsha, sha, c.Authorname, c.Authoremail, c.Time, c.Timezone, logmessage, operation)
 	} else {
 
 	}

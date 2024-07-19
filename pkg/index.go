@@ -73,12 +73,12 @@ func ParseIndex() *Index {
 	// fmt.Println(unsafe.Sizeof(h))
 	hSlice := make([]byte, unsafe.Sizeof(h))
 	_, err = file.Read(hSlice)
-	// fmt.Println(hSlice)
+	fmt.Println(hSlice)
 	Check(err)
 
 	hBuf := bytes.NewBuffer(hSlice[:])
 	err = binary.Read(hBuf, binary.BigEndian, &h.NumberEntries)
-	// fmt.Println(h.NumberEntries)
+	fmt.Println(h.NumberEntries)
 	Check(err)
 
 	idx.Header = h

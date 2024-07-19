@@ -76,5 +76,7 @@ func main() {
 		git.Status()
 	case "reset":
 		git.Reset(args[1:])
+	case "merge":
+		git.Merge(args[1])
 	}
 }
