@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// fetch the SHA1 of the '.git/refs/heads/branchname.txt' from the relative branch file path provided
 func FetchHeadsSHAfromPath(relativebranchfilepath string) (string, error) {
 	totalfilepath := relativebranchfilepath + ".txt"
 	file, err := os.Open(filepath.Join(VCSDirPath, totalfilepath))
@@ -28,19 +29,25 @@ func FetchHeadsSHAfromPath(relativebranchfilepath string) (string, error) {
 	return string(s), err
 }
 
+// update the '.git/refs/heads/branchname.txt' to the s string provided
 func UpdateHeads(s string, relativebranchfilepath string) {
 	os.MkdirAll(filepath.Join(VCSDirPath, "refs/heads"), 0777)
 	os.MkdirAll(filepath.Join(VCSDirPath, "refs/tags"), 0777)
-	if strings.HasPrefix(relativebranchfilepath, "refs/") {
+	fmt.Println(relativebranchfilepath)
+	if strings.HasPrefix(relativebranchfilepath, "/refs/") || strings.HasPrefix(relativebranchfilepath, "refs/") {
 		totalfilepath := relativebranchfilepath + ".txt"
-		file, err := os.OpenFile(filepath.Join(VCSDirPath, totalfilepath), os.O_CREATE|os.O_WRONLY, 0777)
+		file, err := os.OpenFile(filepath.Join(VCSDirPath, totalfilepath), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 
 		Check(err)
-		file.WriteString(s)
+		_, err = file.WriteString(s)
+		Check(err)
 		defer file.Close()
+		// fmt.Println("i am not here")
 	}
+	fmt.Println("sha:", s)
 }
 
+// update the HEAD.txt with the branchname
 func UpdateHEAD(branchrelativepath string) {
 	file, err := os.OpenFile(filepath.Join(VCSDirPath, "HEAD.txt"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777) //truncate open karne ke bad file ke contents remove kar deta hai
 	Check(err)

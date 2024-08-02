@@ -6,6 +6,10 @@ import (
 	"vcs/pkg"
 )
 
+/*
+This function is used to switch from one branch or hash to another branch or hash.
+This also changes the working directory wrt the branch on which it is shifted.
+*/
 func Checkout(args []string) {
 	sha, branchexists, _, err := pkg.FindHashofCommit(args[0])
 	if err != nil {

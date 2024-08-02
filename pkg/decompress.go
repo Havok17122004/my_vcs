@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// read a zlib compressed file and return the content, header and the size of the uncompressed file respectively
 func ReadCompressedFile(fp string) (string, string, int64) { // header of this file is `blob <size>\0` from here get the filesize
 
 	file, err := os.Open(fp)

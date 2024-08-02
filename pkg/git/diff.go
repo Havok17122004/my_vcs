@@ -73,6 +73,8 @@ func Diff(args []string) { // does not consider file rename and file move!!!
 		fmt.Println(FindDiffStrings(content))
 	}
 }
+
+// find the difference between two strings and returns a string containing the diffs
 func FindDiffStrings(content PairFilesWithContents) string {
 	edits := myers.ComputeEdits(span.URIFromPath(content.FilePathRel1), content.Content1, content.Content2)
 	allLines := fmt.Sprint(gotextdiff.ToUnified(content.FilePathRel1, content.FilePathRel2, content.Content1, edits))
@@ -90,6 +92,11 @@ func FindDiffStrings(content PairFilesWithContents) string {
 	return mainText
 }
 
+/*
+	find the difference between two versions of files. version1 being file version in commithash1. version2 being file version in commithash2.
+
+returns a pair of file versions, each value containing both filepath and filecontents.
+*/
 func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) PairFilesWithContents { // not used traverse tree here bcoz getCommittedEntry seems faster.
 	treeentry1 := pkg.GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash1)
 	treeentry2 := pkg.GetCommittedEntry(filepath.Join(pkg.WorkingDirPath, path), commithash2)
@@ -122,6 +129,11 @@ func FindDiffCommittedFile(path string, commithash1 string, commithash2 string) 
 	return content
 }
 
+/*
+	find the difference between two versions of all files. version1 being file versions in commithash1. version2 being file versions in commithash2.
+
+returns a slice of pair of file versions, each value containing both filepath and filecontents.
+*/
 func FindDiffTrees(treesha1 string, treesha2 string) []PairFilesWithContents {
 	tree1 := pkg.TraverseTree(treesha1)
 	tree2 := pkg.TraverseTree(treesha2)
@@ -163,6 +175,11 @@ func FindDiffTrees(treesha1 string, treesha2 string) []PairFilesWithContents {
 	return allContents
 }
 
+/*
+	find the difference between the working directory and staging area of all files.
+
+returns a slice of pair of file versions, each value containing both filepath and filecontents.
+*/
 func FindDiffStagingArea(path string) []PairFilesWithContents {
 	var allContents []PairFilesWithContents
 	index := pkg.ParseIndex()
@@ -175,6 +192,11 @@ func FindDiffStagingArea(path string) []PairFilesWithContents {
 	return allContents
 }
 
+/*
+	find the difference between the working directory and staging area of the file specified.
+
+returns a pair of file versions, each value containing both filepath and filecontents.
+*/
 func FindDiffFileStagingArea(path string) PairFilesWithContents {
 	index = pkg.ParseIndex()
 	value, exists := index.Entries[path]

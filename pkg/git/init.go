@@ -31,6 +31,7 @@ func createHEAD() {
 	pkg.Check(err)
 }
 
+// creates a .vcs folder that initialises all the required files/folders.
 func Init(args []string) {
 	var wd string
 	wd, _ = os.Getwd()

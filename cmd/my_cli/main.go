@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"vcs/cmd"
 	"vcs/pkg"
@@ -41,29 +40,13 @@ func main() {
 	case "commit":
 		git.Commit()
 	case "branch":
-		if len(args) == 2 {
-			git.CreateBranch(args[1])
+		if len(args) >= 2 {
+			git.CreateBranch(args[1:])
 		} else {
 			git.ListBranches()
 		}
 	case "checkout":
 		git.Checkout(args[1:])
-	case "decompress":
-		dir, _ := os.Open(filepath.Join(pkg.VCSDirPath, "objects"))
-		files, _ := dir.Readdirnames(0)
-		for i, file := range files {
-			os.Chdir(filepath.Join(pkg.VCSDirPath, "objects", file))
-			direntry, _ := os.ReadDir(filepath.Join(pkg.VCSDirPath, "objects", file))
-			for _, diren := range direntry {
-				s, _, _ := pkg.ReadCompressedFile(diren.Name())
-				fmt.Println(file, diren.Name())
-				fmt.Println(s)
-				fmt.Printf("\n\n\n\n\n")
-			}
-			if i > 40 {
-				break
-			}
-		}
 	case "add":
 		git.Add(args[1:])
 	case "diff":

@@ -8,6 +8,10 @@ import (
 	"vcs/pkg"
 )
 
+/*
+this function decompresses the file specified by the hash provided by the user and according to the flag provided by the user
+The flags are -p for entire decompression, -t for the type of the file (whether it is a commit file, blob or a tree) or -s for the size of the file after decompression.
+*/
 func Catfile(flag string, incompletehash string) {
 	if len(incompletehash) < 3 {
 		fmt.Println("please enter a valid hash")

@@ -12,6 +12,7 @@ import (
 
 var index *pkg.Index
 
+// saves the snapshot of the staging area with the name of the commit specified.
 func Commit() {
 	var c pkg.CommitObject
 	var err1, err2 error
@@ -46,6 +47,7 @@ func Commit() {
 
 }
 
+// gets the filemode of different types of files.
 func GetFileMode(file os.DirEntry) string {
 	info, _ := file.Info()
 	if info.Mode()&0100 != 0 {
@@ -55,6 +57,7 @@ func GetFileMode(file os.DirEntry) string {
 	}
 }
 
+// makes a tree object with the list of files/folders as contents of the object
 func makeTrees(path string) (string, bool) {
 	dir, err := os.Open(path)
 	pkg.Check(err)
@@ -97,6 +100,7 @@ func makeTrees(path string) (string, bool) {
 	return stringsha, true
 }
 
+// makes a commit object containing relevant information about the snapshot being taken of the files.
 func makeCommitObject(c *pkg.CommitObject) {
 	var err error
 	c.Parentsha, err = pkg.FetchHeadsSHAfromPath(pkg.ParseHEADgivePath())
@@ -112,15 +116,16 @@ func makeCommitObject(c *pkg.CommitObject) {
 				return
 			}
 			operation = "commit"
-		} else {
-			operation = "commit(initial)"
 		}
+	}
+	if operation == "" {
+		operation = "commit(initial)"
 	}
 	c.Time = time.Now().Unix()
 	c.Timezone = strings.Split(time.Now().String(), " ")[2]
 	s = fmt.Sprintf("%sauthor %s <%s> %d %s\ncommitter %s <%s> %d %s\n\n%s\n", s, c.Authorname, c.Authoremail, c.Time, c.Timezone, c.CommitterName, c.CommitterEmail, c.Time, c.Timezone, c.Message)
 	sha := pkg.CompressStringStoreInObjects(s, "commit")
-	fmt.Println("Created commit object ", sha)
+	fmt.Println("Created commit object", sha)
 	pkg.UpdateHeads(sha, pkg.ParseHEADgivePath())
 	var logmessage string = c.Message // to be updated!
 	pkg.UpdateHEADlog(c.Parentsha, sha, c.Authorname, c.Authoremail, c.Time, c.Timezone, logmessage, operation)
@@ -130,8 +135,5 @@ func makeCommitObject(c *pkg.CommitObject) {
 	_, err = os.Open(filepath.Join(pkg.VCSDirPath, relativebranchfilepath+".txt"))
 	if err == nil {
 		pkg.UpdateBranchLog(filepath.Base(relativebranchfilepath), c.Parentsha, sha, c.Authorname, c.Authoremail, c.Time, c.Timezone, logmessage, operation)
-	} else {
-
 	}
-
 }

@@ -14,6 +14,7 @@ type PairOfBools struct {
 	ExistInDir  bool
 }
 
+// get the committed tree entry of fullPath in that respective commit hash
 func GetCommittedEntry(fullPath string, commithash string) TreeEntry {
 	commitObject := ParseCommit(commithash)
 	if fullPath == WorkingDirPath {
@@ -94,12 +95,13 @@ func RecoverWorkingDirToCommitWithDeletions(fullPath string, hash string) {
 			_, err = newFile.WriteString(s)
 			Check(err)
 		} else { //delete from working dir
-			// os.RemoveAll(path)
+			os.RemoveAll(path)
 			fmt.Println("deleted", path)
 		}
 	}
 }
 
+// recover the staging area to the commit specified.
 func RecoverIndexToCommit(fullPath string, hash string) {
 	var newIndex Index
 	newIndex.Entries = make(map[string]Entry)

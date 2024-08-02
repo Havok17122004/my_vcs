@@ -9,6 +9,7 @@ import (
 	"vcs/pkg"
 )
 
+// lists the log contents of the processes done until now.
 func Log(args []string) {
 	toBeDisplayed := make(map[int64]pkg.LogContents)
 	exclusions := make(map[int64]pkg.LogContents)

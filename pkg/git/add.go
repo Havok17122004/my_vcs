@@ -8,6 +8,7 @@ import (
 	"vcs/pkg"
 )
 
+// this function is used to make blobs of files using zlib-compression
 func makeBlobs(path string, index *pkg.Index) {
 	dir, err := os.Open(filepath.Join(pkg.WorkingDirPath, path))
 	pkg.Check(err)
@@ -43,6 +44,7 @@ func makeBlobs(path string, index *pkg.Index) {
 	}
 }
 
+// this function adds the files to the staging area and compress them as zlib.
 func Add(arg []string) {
 	if len(arg) == 0 {
 		fmt.Println("no file path passed as argument to add")

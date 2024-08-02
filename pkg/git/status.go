@@ -15,6 +15,7 @@ const (
 	Yellow  = "\033[33m"
 )
 
+// gives the status of the current working directory and the staging area
 func Status() {
 	branch_or_hash := pkg.ParseHEADgivePath()
 	if strings.Contains(branch_or_hash, string(os.PathSeparator)) {

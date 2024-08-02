@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Parse the commit object
 func ParseCommit(hash string) *CommitObject {
 	var c CommitObject
 	if hash == "0000000000000000000000000000000000000000" {
@@ -63,6 +64,7 @@ func ParseCommit(hash string) *CommitObject {
 	return &c
 }
 
+// Parse the tree objects
 func ParseTree(hash string) *[]TreeEntry {
 	// fmt.Println(hash)
 	if hash == "" {
@@ -92,6 +94,7 @@ func ParseTree(hash string) *[]TreeEntry {
 	return &treeObjects
 }
 
+// Parse the log and return a slice of logcontents
 func ParseLog(logpath string) *[]LogContents {
 	dir := filepath.Dir(logpath)
 	err := os.MkdirAll(dir, 0777)
@@ -133,6 +136,7 @@ func ParseLog(logpath string) *[]LogContents {
 	return &parsedContentsLog
 }
 
+// parse the HEAD to give the branch on which the HEAD is pointing to.
 func ParseHEADgivePath() string {
 	file, err := os.OpenFile(filepath.Join(VCSDirPath, "HEAD.txt"), os.O_CREATE|os.O_RDONLY, 0777)
 	Check(err)

@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// compress the file according to zlib compression and save it in .vcs/objects with the file SHA1 as the name of the file.
 func CompressFileStoreInObjects(fp string, objectType string) string {
 	f, err := os.Open(fp)
 	Check(err)
@@ -49,6 +50,7 @@ func CompressFileStoreInObjects(fp string, objectType string) string {
 	return stringSHA
 }
 
+// compress the string according to zlib compression and save it in .vcs/objects with the file SHA1 as the name of the file.
 func CompressStringStoreInObjects(s string, objectType string) string {
 	var buffer bytes.Buffer
 

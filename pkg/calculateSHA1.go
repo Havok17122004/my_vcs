@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// get the SHA1 of file specified
 func GetSHAofFile(f *os.File) string {
 	h := sha1.New()
 
@@ -16,6 +17,7 @@ func GetSHAofFile(f *os.File) string {
 	return s
 }
 
+// get the SHA1 of the string specified
 func GetSHAofText(s string) [20]byte {
 	return sha1.Sum([]byte(s))
 }

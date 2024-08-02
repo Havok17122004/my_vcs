@@ -7,6 +7,12 @@ import (
 	"vcs/pkg"
 )
 
+/*
+Reset the working directory and staging area to the commit provided, according to the flags provided.
+soft reset - only change the head to the commit hash specified
+hard reset - change the head to the commit hash, change the working directory, and change the staging area to the commit specified
+mixed reset - change the head to the commit hash, and change the staging area to the commit provided.
+*/
 func Reset(args []string) {
 	flagSet := flag.NewFlagSet("reset", flag.ExitOnError)
 	soft := flagSet.Bool("soft", false, "use the soft flag")

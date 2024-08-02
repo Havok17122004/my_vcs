@@ -13,7 +13,7 @@ import (
 )
 
 // TODO: Refactor code by adding structs that can efficiently manage the peekConfig and other functions.
-
+// read/edit the config file
 func Config(s []string) {
 	// place other flags here
 	scopePtr := flag.String("scope", "local", "used to define the scope of config file on which operation is to be performed")
@@ -36,12 +36,11 @@ func Config(s []string) {
 	pkg.Check(err)
 	defer file.Close()
 	len := len(s)
-
-	setCommitValues(strings.Split(s[len-2], "."), s[len-1], file) // TODO: Improve the flag parsing code.
+	setConfigValues(strings.Split(s[len-2], "."), s[len-1], file) // TODO: Improve the flag parsing code.
 }
 
-func setCommitValues(s []string, val string, file *os.File) {
-
+// set the values of the config of the field defined in s as val.
+func setConfigValues(s []string, val string, file *os.File) {
 	sectionFound, _, _, lineNum, err := peekConfig(s[0], s[1], file) // sectionFound, fieldFound, value, lineNum, err
 	file.Seek(0, io.SeekStart)
 	if lineNum != -1 {
@@ -74,6 +73,7 @@ func setCommitValues(s []string, val string, file *os.File) {
 	// file.Close()
 }
 
+// read the config values as already present in the .config file
 func peekConfig(section string, field string, file *os.File) (bool, bool, string, int, error) { // sectionFound, fieldFound, value, lineNum, err
 	reader := bufio.NewReader(file)
 
@@ -129,6 +129,7 @@ func peekConfig(section string, field string, file *os.File) (bool, bool, string
 	return sectionFound, fieldFound, value, lineNum, err
 }
 
+// find the data related to the section and field in the config file.
 func ParseConfigData(section string, field string) (string, error) {
 	os.Chdir(pkg.VCSDirPath)
 
